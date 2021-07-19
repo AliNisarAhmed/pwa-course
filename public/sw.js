@@ -1,5 +1,27 @@
 self.addEventListener('install', function (event) {
 	console.log('[Service Worker] installing Service worker ...', event);
+	event.waitUntil(
+		// waitUntil: dont finish the installation event until the given promise is done
+		caches.open('static').then(function (cache) {
+			console.log('[Service Worker] Precaching App Shell');
+			cache.addAll([
+				'/',
+				'/index.html', // we are caching requests/url
+				'/src/js/app.js',
+				'/src/js/feed.js',
+				'/src/js/material.min.js',
+				'/src/css/app.css',
+				'/src/css/feed.css',
+				'/src/images/main-image.jpg',
+				'https://fonts.googleapis.com/css?family=Roboto',
+				'https://fonts.googleapis.com/icon?family=Material+Icons',
+				'https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css',
+			]);
+			// cache.add('/');
+			// cache.add('/index.html');
+			// cache.add('/src/js/app.js');
+		})
+	);
 });
 
 self.addEventListener('activate', function (event) {
@@ -8,6 +30,16 @@ self.addEventListener('activate', function (event) {
 });
 
 self.addEventListener('fetch', function (event) {
-	console.log('[Service Worker] Fetching something...', event);
+	// console.log('[Service Worker] Fetching something...', event);
 	// event.respondWith(fetch(event.request));
+
+	event.respondWith(
+		caches.match(event.request).then(function (response) {
+			if (response) {
+				return response;
+			} else {
+				return fetch(event.request);
+			}
+		})
+	);
 });
