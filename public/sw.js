@@ -48,8 +48,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-	// console.log('[Service Worker] Fetching something...', event);
-	// event.respondWith(fetch(event.request));
 
 	if (!(event.request.url.indexOf('http') === 0)) return; // dont cache for non-http requests
 
