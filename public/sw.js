@@ -1,5 +1,5 @@
-var CACHE_STATIC_NAME = 'static-v5';
-var CACHE_DYNAMIC_NAME = 'dynamic-v3';
+var CACHE_STATIC_NAME = 'static-v7';
+var CACHE_DYNAMIC_NAME = 'dynamic-v5';
 
 self.addEventListener('install', (event) => {
 	console.log('[Service Worker] installing Service worker ...', event);
@@ -14,6 +14,7 @@ self.addEventListener('install', (event) => {
 			cache.addAll([
 				'/',
 				'/index.html', // we are caching requests/url
+				'/offline.html',
 				'/src/js/app.js',
 				'/src/js/feed.js',
 				'/src/js/material.min.js',
@@ -55,15 +56,18 @@ self.addEventListener('fetch', (event) => {
 			if (response) {
 				return response;
 			} else {
-				return fetch(event.request).then((res) => {
-					return caches
-						.open(CACHE_DYNAMIC_NAME)
-						.then(function (cache) {
+				return fetch(event.request)
+					.then((res) => {
+						return caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
 							cache.put(event.request.url, res.clone());
 							return res;
-						})
-						.catch((err) => {});
-				});
+						});
+					})
+					.catch((err) => {
+						return caches.open(CACHE_STATIC_NAME).then((cache) => {
+							return cache.match('/offline.html');
+						});
+					});
 			}
 		})
 	);
