@@ -1,5 +1,5 @@
-var CACHE_STATIC_NAME = 'static-v3';
-var CACHE_DYNAMIC_NAME = 'dynamic-v2';
+var CACHE_STATIC_NAME = 'static-v5';
+var CACHE_DYNAMIC_NAME = 'dynamic-v3';
 
 self.addEventListener('install', (event) => {
 	console.log('[Service Worker] installing Service worker ...', event);
@@ -48,7 +48,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-
 	if (!(event.request.url.indexOf('http') === 0)) return; // dont cache for non-http requests
 
 	event.respondWith(
