@@ -1,5 +1,5 @@
-var CACHE_STATIC_NAME = 'static-v7';
-var CACHE_DYNAMIC_NAME = 'dynamic-v5';
+var CACHE_STATIC_NAME = 'static-v8';
+var CACHE_DYNAMIC_NAME = 'dynamic-v6';
 
 self.addEventListener('install', (event) => {
 	console.log('[Service Worker] installing Service worker ...', event);
@@ -48,27 +48,90 @@ self.addEventListener('activate', (event) => {
 	return self.clients.claim();
 });
 
+// Cache first with Network fallback strategy
+// self.addEventListener('fetch', (event) => {
+// 	if (!(event.request.url.indexOf('http') === 0)) return; // dont cache for non-http requests
+
+// 	event.respondWith(
+// 		caches.match(event.request).then((response) => {
+// 			if (response) {
+// 				return response;
+// 			} else {
+// 				return fetch(event.request)
+// 					.then((res) => {
+// 						return caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
+// 							cache.put(event.request.url, res.clone());
+// 							return res;
+// 						});
+// 					})
+// 					.catch((err) => {
+// 						return caches.open(CACHE_STATIC_NAME).then((cache) => {
+// 							return cache.match('/offline.html');
+// 						});
+// 					});
+// 			}
+// 		})
+// 	);
+// });
+
+// Cache - then network
 self.addEventListener('fetch', (event) => {
+	const url = 'https://httpbin.org/get';
+
 	if (!(event.request.url.indexOf('http') === 0)) return; // dont cache for non-http requests
 
-	event.respondWith(
-		caches.match(event.request).then((response) => {
-			if (response) {
-				return response;
-			} else {
-				return fetch(event.request)
-					.then((res) => {
-						return caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
-							cache.put(event.request.url, res.clone());
-							return res;
-						});
-					})
-					.catch((err) => {
-						return caches.open(CACHE_STATIC_NAME).then((cache) => {
+	// if the request matches the url -> use Cache With Network
+	// else use Cache first then Network Strategy
+	if (event.request.url.indexOf(url) > -1) {
+		event.respondWith(
+			caches.open(CACHE_DYNAMIC_NAME).then((cache) => {
+				return fetch(event.request).then((res) => {
+					cache.put(event.request, res.clone());
+					return res;
+				});
+			})
+		);
+	} else {
+		event.respondWith(
+			caches
+				.match(event.request)
+				.then((response) => {
+					if (response) {
+						return response;
+					} else {
+						return fetch(event.request).then((res) =>
+							caches.open(CACHE_DYNAMIC_NAME).then((cache) => {
+								cache.put(event.request.url, res.clone());
+								return res;
+							})
+						);
+					}
+				})
+				.catch((err) => {
+					return caches.open(CACHE_STATIC_NAME).then((cache) => {
+						if (event.request.url.indexOf('/help')) {
 							return cache.match('/offline.html');
-						});
+						}
 					});
-			}
-		})
-	);
+				})
+		);
+	}
 });
+
+// Network First with Cache fallback strategy - gives a bad UX when there is a slow network, or request fails/timesout after a long time.
+// self.addEventListener('fetch', (event) => {
+// 	if (!(event.request.url.indexOf('http') === 0)) return; // dont cache for non-http requests
+
+// 	event.respondWith(
+// 		fetch(event.request)
+// 			.then((res) => {
+// 				return caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
+// 					cache.put(event.request.url, res.clone());
+// 					return res;
+// 				});
+// 			})
+// 			.catch((err) => {
+// 				return caches.match(event.request);
+// 			})
+// 	);
+// });
