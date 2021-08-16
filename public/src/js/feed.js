@@ -20,6 +20,17 @@ function openCreatePostModal() {
 
 		deferredPrompt = null;
 	}
+
+	// un-register a Service Worker
+	// if ('serviceWorker' in navigator) {
+	// 	console.log("UnRegistering");
+	// 	navigator.serviceWorker.getRegistrations()
+	// 		.then(registrations => {
+	// 			for (let reg of registrations) {
+	// 				reg.unregister();
+	// 			}
+	// 		})
+	// }
 }
 
 function closeCreatePostModal() {
